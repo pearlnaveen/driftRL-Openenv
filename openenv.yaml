@@ -1,0 +1,33 @@
+name: DriftRL OpenEnv
+description: Reinforcement Learning based data cleaning environment
+
+tasks:
+  - name: data_cleaning
+    description: Clean dataset using RL agent
+    grader:
+      type: simple
+      success_threshold: 0.8
+
+endpoints:
+  reset: /reset
+  step: /step
+  run: /run
+
+state:
+  type: object
+  properties:
+    missing:
+      type: integer
+    duplicates:
+      type: integer
+    invalid:
+      type: integer
+
+actions:
+  - remove_missing
+  - remove_duplicates
+  - fix_invalid
+
+reward:
+  type: float
+  range: [0.0, 1.0]

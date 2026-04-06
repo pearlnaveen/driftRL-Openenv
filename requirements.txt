@@ -1,0 +1,8 @@
+torch
+pydantic
+numpy
+pandas
+fastapi
+uvicorn
+requests
+openai
