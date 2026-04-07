@@ -1,4 +1,3 @@
-app = FastAPI()
 from fastapi import FastAPI
 import torch
 import os
