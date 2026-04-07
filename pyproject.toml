@@ -1,0 +1,16 @@
+[project]
+name = "driftrl-openenv"
+version = "0.1.0"
+description = "Reinforcement Learning based Data Cleaning using OpenEnv"
+authors = [
+    { name = "Your Name" }
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "torch",
+    "pandas",
+    "numpy",
+    "requests",
+    "openai"
+]
