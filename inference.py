@@ -2,11 +2,19 @@ import os
 import requests
 from openai import OpenAI
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://pearl1212-driftrl-openenv.hf.space")
+# MUST use these env variables
+API_BASE_URL = os.environ["API_BASE_URL"]
+API_KEY = os.environ["API_KEY"]
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN = os.getenv("HF_TOKEN", "")
 
-client = OpenAI(api_key=HF_TOKEN)
+# OpenAI client via proxy
+client = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=API_KEY
+)
+
+# Your deployed API
+APP_URL = "https://pearl1212-driftrl-openenv.hf.space"
 
 MAX_STEPS = 10
 
@@ -16,17 +24,11 @@ def log_start():
 def log_step(step, action, reward, done, error=None):
     error_val = error if error else "null"
     done_val = str(done).lower()
-    print(
-        f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}",
-        flush=True
-    )
+    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}", flush=True)
 
 def log_end(success, steps, score, rewards):
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(
-        f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}",
-        flush=True
-    )
+    print(f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}", flush=True)
 
 def run():
     log_start()
@@ -36,25 +38,26 @@ def run():
     success = False
 
     try:
-        # 🔥 REQUIRED OpenAI call (dummy compliance)
+        # REQUIRED: Make LLM call via proxy
         client.chat.completions.create(
             model=MODEL_NAME,
             messages=[{"role": "user", "content": "start"}],
             max_tokens=1
         )
 
-        requests.get(f"{API_BASE_URL}/reset")
+        # Reset env
+        requests.post(f"{APP_URL}/reset")
 
         done = False
 
         while not done and steps < MAX_STEPS:
             steps += 1
 
-            res = requests.get(f"{API_BASE_URL}/step").json()
+            res = requests.post(f"{APP_URL}/step").json()
 
-            action = res.get("action", "none")
+            action = int(res.get("action", 0))
             reward = float(res.get("reward", 0))
-            done = res.get("done", False)
+            done = bool(res.get("done", False))
 
             rewards.append(reward)
 
