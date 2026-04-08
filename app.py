@@ -7,51 +7,32 @@ from train import DQN
 
 app = FastAPI()
 
-# ---------------------------
-# LOAD ENV + MODEL
-# ---------------------------
 env = DriftEnv()
-
 model = DQN()
 
 MODEL_PATH = "model/dqn_model.pth"
 
-# Check if model exists
-if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError(
-        "Model file not found. Run train.py first to generate model/dqn_model.pth"
-    )
-
-model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
-model.eval()
+if os.path.exists(MODEL_PATH):
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
+    model.eval()
 
 state = None
 
-# ---------------------------
-# ROOT
-# ---------------------------
-@app.get("/")
-def home():
-    return {"message": "DriftRL OpenEnv API running 🚀"}
+# ROOT (both GET & POST)
+@app.api_route("/", methods=["GET", "POST"])
+def root():
+    return {"status": "ok"}
 
-# ---------------------------
-# RESET ENVIRONMENT
-# ---------------------------
-@app.get("/reset")
+# RESET
+@app.api_route("/reset", methods=["GET", "POST"])
 def reset():
     global state
     obs = env.reset()
     state = torch.tensor(obs, dtype=torch.float32)
+    return {"state": obs}
 
-    return {
-        "state": obs,
-        "message": "Environment reset"
-    }
-
-# ---------------------------
-# STEP (MODEL ACTION)
-# ---------------------------
-@app.get("/step")
+# STEP
+@app.api_route("/step", methods=["GET", "POST"])
 def step():
     global state
 
@@ -62,7 +43,6 @@ def step():
         action = torch.argmax(model(state)).item()
 
     next_state, reward, done, _ = env.step(action)
-
     state = torch.tensor(next_state, dtype=torch.float32)
 
     return {
@@ -72,10 +52,8 @@ def step():
         "done": done
     }
 
-# ---------------------------
-# RUN FULL EPISODE
-# ---------------------------
-@app.get("/run")
+# RUN
+@app.api_route("/run", methods=["GET", "POST"])
 def run():
     global state
 
@@ -83,7 +61,6 @@ def run():
     state = torch.tensor(obs, dtype=torch.float32)
 
     steps = []
-
     done = False
 
     while not done:
@@ -100,8 +77,4 @@ def run():
 
         state = torch.tensor(next_state, dtype=torch.float32)
 
-    return {
-        "initial_state": obs,
-        "steps": steps,
-        "message": "Cleaning completed ✅"
-    }
+    return {"steps": steps}
